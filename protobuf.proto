@@ -3,8 +3,16 @@ syntax = "proto3";
 package main;
 
 message AssociatedData {
-  string  message   = 1;
-  int32   threshold = 2;
-  int32   shares    = 3;
-  bytes   nonce     = 4;
+  bytes uuid      = 1;
+  int32 threshold = 2;
+  int32 shares    = 3;
+}
+
+message ProtoShard {
+  AssociatedData associated = 1;
+  int32 index     = 2;
+  bytes keyshare  = 3;
+  bytes pubkey    = 4;
+  bytes signature = 5;
+  bytes data      = 6;
 }

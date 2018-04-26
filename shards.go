@@ -1,43 +1,49 @@
 package main
 
 import (
-	"encoding/base64"
 	"encoding/pem"
+	"fmt"
 	"strconv"
 
-	"golang.org/x/crypto/ed25519"
+	proto "github.com/golang/protobuf/proto"
+	"github.com/google/uuid"
 )
 
 type Shard struct {
-	message   string
-	index     int
-	nonce     []byte
-	keyshare  []byte
-	pubkey    ed25519.PublicKey
-	signature []byte
-	data      []byte
+	Description string
+	Threshold   int
+	UUID        uuid.UUID
+	Proto       *ProtoShard
 }
 
-func (s *Shard) toBlock() (block *pem.Block) {
-
-	base64e := base64.StdEncoding.EncodeToString
+func (s *Shard) toBlock() (block *pem.Block, err error) {
 
 	headers := make(map[string]string)
-	headers["Message"] = s.message
-	headers["Index"] = strconv.Itoa(s.index)
-	headers["Nonce"] = base64e(s.nonce)
-	headers["Keyshare"] = base64e(s.keyshare)
-	headers["Public Key"] = base64e(s.pubkey)
-	headers["Signature"] = base64e(s.signature)
+	headers["Threshold"] = strconv.Itoa(s.Threshold)
+	headers["UUID"] = fmt.Sprintf("%s", s.UUID)
+	if len(s.Description) > 0 {
+		headers["Description"] = s.Description
+	}
 
-	return &pem.Block{Type: pemtype, Headers: headers, Bytes: s.data}
+	bytes, err := proto.Marshal(s.Proto)
+	if err != nil {
+		return
+	}
+
+	block = &pem.Block{Type: pemtype, Headers: headers, Bytes: bytes}
+	return
 
 }
 
-func EncodePEM(shard Shard) (p []byte) {
+func EncodePEM(shard *Shard) (p []byte, err error) {
 
-	block := shard.toBlock()
-	return pem.EncodeToMemory(block)
+	block, err := shard.toBlock()
+	if err != nil {
+		return
+	}
+
+	p = pem.EncodeToMemory(block)
+	return
 
 }
 
