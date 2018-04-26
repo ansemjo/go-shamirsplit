@@ -1,3 +1,5 @@
+// build: $ protoc --go_out=. *.proto
+
 syntax = "proto3";
 
 package sharding;
