@@ -9,6 +9,7 @@ import (
 )
 
 type Shard struct {
+	message   string
 	index     int
 	nonce     []byte
 	keyshare  []byte
@@ -22,6 +23,7 @@ func (s *Shard) toBlock() (block *pem.Block) {
 	base64e := base64.StdEncoding.EncodeToString
 
 	headers := make(map[string]string)
+	headers["Message"] = s.message
 	headers["Index"] = strconv.Itoa(s.index)
 	headers["Nonce"] = base64e(s.nonce)
 	headers["Keyshare"] = base64e(s.keyshare)

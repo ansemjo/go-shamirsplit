@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package main;
+
+message AssociatedData {
+  string  message   = 1;
+  int32   threshold = 2;
+  int32   shares    = 3;
+  bytes   nonce     = 4;
+}
