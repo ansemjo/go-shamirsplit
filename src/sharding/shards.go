@@ -1,4 +1,4 @@
-package main
+package sharding
 
 import (
 	"encoding/pem"
@@ -7,9 +7,13 @@ import (
 	"strconv"
 
 	"github.com/ansemjo/shamir/src/cryptography"
+	"github.com/ansemjo/shamir/src/util"
 	proto "github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
 )
+
+// TODO: use random keys
+const demokey = "Zxky/LE10mbSdeT4Z3cPoJVcK5Vz3A/oRIR3DcUbgM8="
 
 // Shard is a high-level struct for construction of PEM files.
 // For binary files marshalling a ProtoShard is sufficient.
@@ -23,8 +27,8 @@ type Shard struct {
 func CreateShards(threshold, shares int, message []byte, description string) (shards []*Shard, err error) {
 
 	// message data
-	uuid := RandomUUID()
-	key, err := decode(demokey) // TODO: use random key!
+	uuid := util.RandomUUID()
+	key, err := util.Base64decode(demokey) // TODO: use random key!
 	if err != nil {
 		return
 	}
@@ -43,7 +47,7 @@ func CreateShards(threshold, shares int, message []byte, description string) (sh
 	// use the first 12 bytes of uuid as nonce
 	nonce := uuid[:12]
 
-	ciphertext, err := cryptography.Encrypt(key, nonce, ad, lipsum)
+	ciphertext, err := cryptography.Encrypt(key, nonce, ad, message)
 	//fmt.Println("Nonce:", encode(nonce))
 	//fmt.Println("Ciphertext:", encode(ciphertext))
 
@@ -79,11 +83,11 @@ func CreateShards(threshold, shares int, message []byte, description string) (sh
 
 		// marshal shard w/o signature and pubkey
 		m, err := proto.Marshal(p)
-		fatal(err)
+		util.Fatal(err)
 
 		// sign protobuf and amend shard
 		sig, pub, err := cryptography.EdSign(key, m)
-		fatal(err)
+		util.Fatal(err)
 		p.Pubkey = pub
 		p.Signature = sig
 
@@ -136,13 +140,13 @@ func (s *Shard) MarshalPEM() (p []byte, err error) {
 // Inspect logs the internal structure to the console.
 func (s *Shard) Inspect() {
 
-	fmt.Println(r("Shard "+fmt.Sprint(s.UUID)+":"), "index", s.Proto.Index)
-	fmt.Println(y(" Threshold :"), s.Proto.Associated.Threshold)
-	fmt.Println(y(" Shares    :"), s.Proto.Associated.Shares)
-	fmt.Println(g(" Keyshare  :"), encode(s.Proto.Keyshare))
-	fmt.Println(g(" Pubkey    :"), encode(s.Proto.Pubkey))
-	fmt.Println(g(" Signature :"), encode(s.Proto.Signature))
-	fmt.Println(b(" Data      :"), encode(s.Proto.Data))
+	fmt.Println(util.R("Shard "+fmt.Sprint(s.UUID)+":"), "index", s.Proto.Index)
+	fmt.Println(util.Y(" Threshold :"), s.Proto.Associated.Threshold)
+	fmt.Println(util.Y(" Shares    :"), s.Proto.Associated.Shares)
+	fmt.Println(util.G(" Keyshare  :"), util.Base64encode(s.Proto.Keyshare))
+	fmt.Println(util.G(" Pubkey    :"), util.Base64encode(s.Proto.Pubkey))
+	fmt.Println(util.G(" Signature :"), util.Base64encode(s.Proto.Signature))
+	fmt.Println(util.B(" Data      :"), util.Base64encode(s.Proto.Data))
 
 }
 

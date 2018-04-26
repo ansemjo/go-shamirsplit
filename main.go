@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/ansemjo/shamir/src/sharding"
+	"github.com/ansemjo/shamir/src/util"
 )
 
 var (
@@ -17,13 +20,13 @@ var (
 
 func main() {
 
-	shards, err := CreateShards(threshold, shares, lipsum, description)
-	fatal(err)
+	shards, err := sharding.CreateShards(threshold, shares, lipsum, description)
+	util.Fatal(err)
 
 	for _, s := range shards {
 
 		pem, err := s.MarshalPEM()
-		fatal(err)
+		util.Fatal(err)
 		//fmt.Print(string(pem) + "\x00") // add null for easier splitting
 		fmt.Print(string(pem))
 
