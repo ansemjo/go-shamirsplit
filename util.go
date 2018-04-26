@@ -22,3 +22,19 @@ func fatal(e error) {
 		log.Fatal(e)
 	}
 }
+
+func y(s string) string {
+	return fmt.Sprintf("\033[33;1m%s\033[0m", s)
+}
+
+func b(s string) string {
+	return fmt.Sprintf("\033[34;1m%s\033[0m", s)
+}
+
+func r(s string) string {
+	return fmt.Sprintf("\033[31;1m%s\033[0m", s)
+}
+
+func g(s string) string {
+	return fmt.Sprintf("\033[32;1m%s\033[0m", s)
+}

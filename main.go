@@ -89,9 +89,11 @@ func main() {
 
 	for _, s := range shards {
 
-		pem, err := EncodePEM(s)
+		pem, err := s.MarshalPEM()
 		fatal(err)
 		fmt.Println(string(pem))
+
+		s.Inspect()
 
 	}
 
