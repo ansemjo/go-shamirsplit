@@ -6,6 +6,7 @@ import (
 	"github.com/ansemjo/shamir/src/cryptography"
 	"github.com/ansemjo/shamir/src/util"
 	proto "github.com/golang/protobuf/proto"
+	"github.com/google/uuid"
 )
 
 // TODO: use random keys
@@ -16,7 +17,7 @@ const demokey = "Zxky/LE10mbSdeT4Z3cPoJVcK5Vz3A/oRIR3DcUbgM8="
 func CreateShards(threshold, shares int, message []byte, description string) (shards []*Shard, err error) {
 
 	// message data
-	uuid := util.RandomUUID()
+	uuid := uuid.New()
 	key, err := util.Base64decode(demokey) // TODO: use random key!
 	if err != nil {
 		return

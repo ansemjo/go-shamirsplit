@@ -23,21 +23,23 @@ func main() {
 	shards, err := sharding.CreateShards(threshold, shares, lipsum, description)
 	util.Fatal(err)
 
-	for _, s := range shards {
+	pemcollect := make([]byte, 0)
 
+	for _, s := range shards {
 		pem, err := s.MarshalPEM()
 		util.Fatal(err)
-		// 	fmt.Print(string(pem) + "\x00") // add null for easier splitting
-		fmt.Print(string(pem))
-
-		// 	//s.Inspect()
-
+		pemcollect = append(pemcollect, pem...)
 	}
 
-	shards[2].Proto.Pubkey = []byte("\xde\xad\xbe\xef")
-	shards[3].Proto.Index = 2
+	fmt.Print(string(pemcollect))
 
-	pshards := sharding.ExtractProtoShards(shards)
+	// shards[2].Proto.Pubkey = []byte("\xde\xad\xbe\xef")
+	// shards[3].Proto.Index = 2
+
+	readshards, err := sharding.ReadAll(pemcollect)
+	util.Fatal(err)
+
+	pshards := sharding.ExtractProtoShards(readshards)
 
 	data, err := sharding.CombineShards(pshards)
 	util.Fatal(err)
