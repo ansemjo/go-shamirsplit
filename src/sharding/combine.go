@@ -1,43 +1,33 @@
 package sharding
 
 import (
-	"fmt"
+	"github.com/jinzhu/copier"
 
 	"github.com/ansemjo/shamir/src/cryptography"
-	"github.com/ansemjo/shamir/src/util"
 
 	proto "github.com/golang/protobuf/proto"
 )
 
-func verifyShard(s *ProtoShard, pubkey []byte) (ok bool, err error) {
+// CombineShards attempts to reconstruct the encoded and encrypted data
+// from a slice of ProtoShards. The first shard in the slice is assumed
+// to be 'ours' and some of its values are used to verify the rest of
+// the shards.
+func CombineShards(shards []*ProtoShard) (data []byte, err error) {
 
-	// save signature
-	sig := s.GetSignature()
-
-	// marshal shard w/o signature and pubkey
-	s.Pubkey, s.Signature = []byte{}, []byte{}
-	m, err := proto.Marshal(s)
+	// assume the first shard to be our and use for later reference
+	my := &ProtoShard{}
+	err = copier.Copy(my, shards[0])
 	if err != nil {
 		return
 	}
-
-	// verify signature
-	ok = cryptography.EdVerify(pubkey, m, sig)
-	return
-
-}
-
-func CombineShards(shards []*ProtoShard) (data []byte, err error) {
-
-	// first verify uuids
-	// assume the first shard to be ours and use that public key
-	mypub := shards[0].GetPubkey()
+	threshold := int(my.Associated.Threshold)
+	shares := int(my.Associated.Shares)
+	uuid := my.Associated.Uuid
 
 	// verify and collect valid shards
-	verified := make([]*ProtoShard, 0, len(shards))
+	verified := shards[:0]
 	for _, s := range shards {
-		if ok, e := verifyShard(s, mypub); ok {
-			fmt.Println("VERIFIED:", s.Index)
+		if ok, e := verifyShardSignature(s, my.Pubkey); ok {
 			verified = append(verified, s)
 		} else if e != nil {
 			err = e
@@ -45,44 +35,71 @@ func CombineShards(shards []*ProtoShard) (data []byte, err error) {
 		}
 	}
 
-	// TODO: save our / one verified shard for easier access to e.g. associated data
-
-	// collect reed-solomon encoded blocks in correct order
-	rsdata := make([][]byte, verified[0].Associated.Shares)
+	// collect reed-solomon blocks and keyshares
+	rsdata := make([][]byte, shares)
+	keyshares := make([][]byte, 0, shares)
 	for _, v := range verified {
+		// reed-solomon requires correct length and ordering
 		rsdata[v.Index] = v.Data
+		// while shamir shares may not be nil
+		keyshares = append(keyshares, v.Keyshare)
 	}
-	ciphertext, err := cryptography.ReedSolomonReconstruct(rsdata, int(verified[0].Associated.Threshold), int(verified[0].Associated.Shares))
+
+	// reconstruct ciphertext
+	ciphertext, err := cryptography.ReedSolomonReconstruct(rsdata, threshold, shares)
 	if err != nil {
 		return
 	}
 
-	fmt.Println(util.Base64encode(ciphertext))
-
-	// combine shamir secret
-	keyshares := make([][]byte, 0, len(verified))
-	// TODO: combine collection into a single loop
-	for _, k := range verified {
-		keyshares = append(keyshares, k.Keyshare)
-	}
+	// recombine keyshares
 	key, err := cryptography.ShamirCombine(keyshares)
 	if err != nil {
 		return
 	}
 
-	// decrypt
-	ad, err := proto.Marshal(verified[0].Associated)
-	if err != nil {
-		return
-	}
-	message, err := cryptography.Decrypt(key, verified[0].Associated.Uuid[:12], ad, ciphertext)
+	// serialize associated data
+	ad, err := proto.Marshal(my.Associated)
 	if err != nil {
 		return
 	}
 
-	data = message
-	fmt.Println(string(data))
+	// authenticate and decrypt to cleartext
+	data, err = cryptography.Decrypt(key, uuid[:12], ad, ciphertext)
+	return
 
+}
+
+// ExtractProtoShards simply extracts ProtoShard structs to a new slice.
+func ExtractProtoShards(shards []*Shard) (ps []*ProtoShard) {
+
+	ps = make([]*ProtoShard, len(shards))
+	for i, s := range shards {
+		ps[i] = s.Proto
+	}
+	return
+
+}
+
+// verifySignature uses a given Ed25519 public key to verify the signature
+// on a ProtoShard is correct. It does not modify the given shard.
+func verifyShardSignature(s *ProtoShard, pubkey []byte) (ok bool, err error) {
+
+	// copy to a temporary object
+	newshard := &ProtoShard{}
+	err = copier.Copy(newshard, s)
+	if err != nil {
+		return
+	}
+
+	// marshal newshard w/o signature and pubkey
+	newshard.Pubkey, newshard.Signature = []byte{}, []byte{}
+	serialized, err := proto.Marshal(newshard)
+	if err != nil {
+		return
+	}
+
+	// verify signature
+	ok = cryptography.EdVerify(pubkey, serialized, s.Signature)
 	return
 
 }
