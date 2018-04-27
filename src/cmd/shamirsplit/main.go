@@ -3,24 +3,49 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
+	"github.com/akamensky/argparse"
 	"github.com/ansemjo/shamir/src/sharding"
 )
 
 var (
-	// key material
-	demokey = "Zxky/LE10mbSdeT4Z3cPoJVcK5Vz3A/oRIR3DcUbgM8="
-	// parameters
-	threshold   = 3
-	shares      = 5
-	description = "Testing creation of shards."
 	// just a paragraph of lorem ipsum
 	lipsum = []byte("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut auctor velit at urna sodales porta. Quisque tempor rutrum porttitor. Donec ac mi finibus, efficitur urna vitae, imperdiet turpis. Morbi dictum, est convallis mollis egestas, ante nunc auctor odio, in congue leo leo vitae mauris. Aliquam ornare ultricies dui vel fermentum. Sed tellus ligula, hendrerit volutpat luctus commodo, commodo a mi. Maecenas at fermentum turpis. Nullam interdum ex sed turpis venenatis, et facilisis est dignissim.")
 )
 
 func main() {
 
-	shards, err := sharding.CreateShards(threshold, shares, lipsum, description)
+	// init parser and add flags
+	parser := argparse.NewParser("shamirsplit", "Split data with Shamir secret sharing.")
+
+	// TODO: mode, create / combine
+
+	threshold := parser.Int("t", "threshold", &argparse.Options{
+		Required: true,
+		Help:     "minimum number of shares needed for reconstruction",
+	})
+
+	shares := parser.Int("s", "shares", &argparse.Options{
+		Required: true,
+		Help:     "total number of shares to create",
+	})
+
+	description := parser.String("", "description", &argparse.Options{
+		Required: false,
+		Help:     "add a short description to the PEM blocks",
+	})
+
+	// parse arguments and exit if necessary
+	err := parser.Parse(os.Args)
+	if err != nil {
+		fmt.Print(parser.Usage(err))
+		os.Exit(1)
+	}
+
+	///////////////////////////////
+
+	shards, err := sharding.CreateShards(*threshold, *shares, lipsum, *description)
 	if err != nil {
 		log.Fatal(err)
 	}
