@@ -1,7 +1,6 @@
 package sharding
 
 import (
-	"encoding/base64"
 	"fmt"
 
 	"github.com/ansemjo/shamir/src/cryptography"
@@ -17,8 +16,7 @@ const demokey = "Zxky/LE10mbSdeT4Z3cPoJVcK5Vz3A/oRIR3DcUbgM8="
 func CreateShards(threshold, shares int, message []byte, description string) (shards []*Shard, err error) {
 
 	// message data
-	uuid := uuid.New()
-	key, err := base64.StdEncoding.DecodeString(demokey) // TODO: use random key!
+	uuid, key := uuid.New(), cryptography.RandomKey()
 	if err != nil {
 		return
 	}
