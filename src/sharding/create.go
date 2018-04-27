@@ -1,10 +1,10 @@
 package sharding
 
 import (
+	"encoding/base64"
 	"fmt"
 
 	"github.com/ansemjo/shamir/src/cryptography"
-	"github.com/ansemjo/shamir/src/util"
 	proto "github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
 )
@@ -18,7 +18,7 @@ func CreateShards(threshold, shares int, message []byte, description string) (sh
 
 	// message data
 	uuid := uuid.New()
-	key, err := util.Base64decode(demokey) // TODO: use random key!
+	key, err := base64.StdEncoding.DecodeString(demokey) // TODO: use random key!
 	if err != nil {
 		return
 	}

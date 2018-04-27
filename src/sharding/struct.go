@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/ansemjo/shamir/src/util"
 	proto "github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
 )
@@ -111,18 +110,5 @@ func ReadAll(input []byte) (shards []*Shard, err error) {
 		}
 	}
 	return
-
-}
-
-// Inspect logs the internal structure to the console.
-func (s *Shard) Inspect() {
-
-	fmt.Println(util.R("Shard "+fmt.Sprint(s.UUID)+":"), "index", s.Proto.Index)
-	fmt.Println(util.Y(" Threshold :"), s.Proto.Associated.Threshold)
-	fmt.Println(util.Y(" Shares    :"), s.Proto.Associated.Shares)
-	fmt.Println(util.G(" Keyshare  :"), util.Base64encode(s.Proto.Keyshare))
-	fmt.Println(util.G(" Pubkey    :"), util.Base64encode(s.Proto.Pubkey))
-	fmt.Println(util.G(" Signature :"), util.Base64encode(s.Proto.Signature))
-	fmt.Println(util.B(" Data      :"), util.Base64encode(s.Proto.Data))
 
 }

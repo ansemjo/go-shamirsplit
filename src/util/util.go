@@ -3,38 +3,32 @@ package util
 import (
 	"encoding/base64"
 	"fmt"
-	"log"
+
+	"github.com/ansemjo/shamir/src/sharding"
 )
 
-var Base64encode = base64.StdEncoding.EncodeToString
-var Base64decode = base64.StdEncoding.DecodeString
+var enc = base64.StdEncoding.EncodeToString
 
-type print func(struct{}) string
+// Inspect logs the internal structure to the console.
+func Inspect(s *sharding.Shard) {
 
-func PrintArray(name string, array [][]byte) {
-	for i, r := range array {
-		fmt.Println(fmt.Sprintf("%s[%d] =", name, i), Base64encode(r))
-	}
+	fmt.Println(color(red, "Shard "+fmt.Sprint(s.UUID)+":"), "index", s.Proto.Index)
+	fmt.Println(color(green, " Threshold :"), s.Proto.Associated.Threshold)
+	fmt.Println(color(green, " Shares    :"), s.Proto.Associated.Shares)
+	fmt.Println(color(yellow, " Keyshare  :"), enc(s.Proto.Keyshare))
+	fmt.Println(color(yellow, " Pubkey    :"), enc(s.Proto.Pubkey))
+	fmt.Println(color(yellow, " Signature :"), enc(s.Proto.Signature))
+	fmt.Println(color(red, " Data      :"), enc(s.Proto.Data))
+
 }
 
-func Fatal(e error) {
-	if e != nil {
-		log.Fatal(e)
-	}
+func color(c, s string) string {
+	return fmt.Sprintf("\033["+c+";1m%s\033[0m", s)
 }
 
-func Y(s string) string {
-	return fmt.Sprintf("\033[33;1m%s\033[0m", s)
-}
-
-func B(s string) string {
-	return fmt.Sprintf("\033[34;1m%s\033[0m", s)
-}
-
-func R(s string) string {
-	return fmt.Sprintf("\033[31;1m%s\033[0m", s)
-}
-
-func G(s string) string {
-	return fmt.Sprintf("\033[32;1m%s\033[0m", s)
-}
+const (
+	red    = "31"
+	green  = "32"
+	yellow = "33"
+	blue   = "34"
+)

@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/ansemjo/shamir/src/sharding"
-	"github.com/ansemjo/shamir/src/util"
 )
 
 var (
@@ -21,13 +21,17 @@ var (
 func main() {
 
 	shards, err := sharding.CreateShards(threshold, shares, lipsum, description)
-	util.Fatal(err)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	pemcollect := make([]byte, 0)
 
 	for _, s := range shards {
 		pem, err := s.MarshalPEM()
-		util.Fatal(err)
+		if err != nil {
+			log.Fatal(err)
+		}
 		pemcollect = append(pemcollect, pem...)
 	}
 
@@ -37,12 +41,16 @@ func main() {
 	// shards[3].Proto.Index = 2
 
 	readshards, err := sharding.ReadAll(pemcollect)
-	util.Fatal(err)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	pshards := sharding.ExtractProtoShards(readshards)
 
 	data, err := sharding.CombineShards(pshards)
-	util.Fatal(err)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	fmt.Println(string(data))
 
