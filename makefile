@@ -1,5 +1,5 @@
 # targets with no actual files
-.PHONY : install test
+.PHONY : install test clean
 
 # names
 BINARY := shamirsplit
@@ -24,3 +24,7 @@ install : $(BINARY)
 # run go tests TODO
 test :
 	go test
+
+# clean anything not tracked by git
+clean :
+	git clean -fx
