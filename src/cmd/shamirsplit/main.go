@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 
@@ -9,29 +10,26 @@ import (
 	"github.com/ansemjo/shamir/src/sharding"
 )
 
-var (
-	// just a paragraph of lorem ipsum
-	lipsum = []byte("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut auctor velit at urna sodales porta. Quisque tempor rutrum porttitor. Donec ac mi finibus, efficitur urna vitae, imperdiet turpis. Morbi dictum, est convallis mollis egestas, ante nunc auctor odio, in congue leo leo vitae mauris. Aliquam ornare ultricies dui vel fermentum. Sed tellus ligula, hendrerit volutpat luctus commodo, commodo a mi. Maecenas at fermentum turpis. Nullam interdum ex sed turpis venenatis, et facilisis est dignissim.")
-)
-
 func main() {
 
 	// init parser and add flags
 	parser := argparse.NewParser("shamirsplit", "Split data with Shamir secret sharing.")
 
-	// TODO: mode, create / combine
+	// commands
+	create := parser.NewCommand("create", "split stdin into pem shards")
+	combine := parser.NewCommand("combine", "reconstruct data from pem shards")
 
-	threshold := parser.Int("t", "threshold", &argparse.Options{
+	threshold := create.Int("t", "threshold", &argparse.Options{
 		Required: true,
 		Help:     "minimum number of shares needed for reconstruction",
 	})
 
-	shares := parser.Int("s", "shares", &argparse.Options{
+	shares := create.Int("s", "shares", &argparse.Options{
 		Required: true,
 		Help:     "total number of shares to create",
 	})
 
-	description := parser.String("", "description", &argparse.Options{
+	description := create.String("", "description", &argparse.Options{
 		Required: false,
 		Help:     "add a short description to the PEM blocks",
 	})
@@ -43,40 +41,51 @@ func main() {
 		os.Exit(1)
 	}
 
-	///////////////////////////////
-
-	shards, err := sharding.CreateShards(*threshold, *shares, lipsum, *description)
+	// read stdin for input
+	stdin, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	pemcollect := make([]byte, 0)
+	// decide which command to run
+	if create.Happened() {
 
-	for _, s := range shards {
-		pem, err := s.MarshalPEM()
+		shards, err := sharding.CreateShards(*threshold, *shares, stdin, *description)
 		if err != nil {
 			log.Fatal(err)
 		}
-		pemcollect = append(pemcollect, pem...)
+
+		for _, s := range shards {
+			pem, err := s.MarshalPEM()
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Print(string(pem) + "\x00")
+		}
+
 	}
 
-	fmt.Print(string(pemcollect))
+	if combine.Happened() {
 
-	// shards[2].Proto.Pubkey = []byte("\xde\xad\xbe\xef")
-	// shards[3].Proto.Index = 2
+		// TODO: when combining files written with
+		// ... | while read -d '' pem; do printf "%s" "$pem" > pem.$((i++)); done
+		// later with cat pem.* | .. combine
+		// there is a "index out of range" error. probably something about missing EOLs?
 
-	readshards, err := sharding.ReadAll(pemcollect)
-	if err != nil {
-		log.Fatal(err)
+		shards, err := sharding.ReadAll(stdin)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		pshards := sharding.ExtractProtoShards(shards)
+
+		data, err := sharding.CombineShards(pshards)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Print(string(data))
+
 	}
-
-	pshards := sharding.ExtractProtoShards(readshards)
-
-	data, err := sharding.CombineShards(pshards)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(string(data))
 
 }

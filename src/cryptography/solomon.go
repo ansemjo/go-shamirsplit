@@ -10,6 +10,8 @@ import (
 	"github.com/klauspost/reedsolomon"
 )
 
+// TODO: what if shares == threshold? encoder complains about 0 parity shards
+
 // ReedSolomonEncode splits and encodes data into $total shards,
 // out of which $threshold are needed for reconstruction.
 func ReedSolomonEncode(data []byte, threshold, total int) (split [][]byte, err error) {
