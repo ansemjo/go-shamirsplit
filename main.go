@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/ansemjo/shamir/src/sharding"
 	"github.com/ansemjo/shamir/src/util"
 )
@@ -23,15 +21,26 @@ func main() {
 	shards, err := sharding.CreateShards(threshold, shares, lipsum, description)
 	util.Fatal(err)
 
-	for _, s := range shards {
+	// for _, s := range shards {
 
-		pem, err := s.MarshalPEM()
-		util.Fatal(err)
-		//fmt.Print(string(pem) + "\x00") // add null for easier splitting
-		fmt.Print(string(pem))
+	// 	pem, err := s.MarshalPEM()
+	// 	util.Fatal(err)
+	// 	fmt.Print(string(pem) + "\x00") // add null for easier splitting
+	// 	fmt.Print(string(pem))
 
-		//s.Inspect()
+	// 	//s.Inspect()
 
+	// }
+
+	shards[2].Proto.Pubkey = []byte("\xde\xad\xbe\xef")
+	shards[3].Proto.Index = 2
+
+	pshards := make([]*sharding.ProtoShard, len(shards))
+	for i, s := range shards {
+		pshards[i] = s.Proto
 	}
+
+	_, err = sharding.CombineShards(pshards)
+	util.Fatal(err)
 
 }
