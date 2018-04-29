@@ -63,7 +63,6 @@ func UnmarshalPEM(armor []byte) (shard *Shard, rest []byte, err error) {
 	// decode pem
 	block, rest := pem.Decode(armor)
 	if block == nil {
-		//err = fmt.Errorf("no pem blocks found")
 		return
 	}
 	if block.Type != pemType {
@@ -89,7 +88,12 @@ func UnmarshalPEM(armor []byte) (shard *Shard, rest []byte, err error) {
 	}
 
 	// assemble struct
-	shard = &Shard{Description: block.Headers[headerDesc], Threshold: t, UUID: u, Proto: ps}
+	shard = &Shard{
+		Description: block.Headers[headerDesc],
+		Threshold:   t,
+		UUID:        u,
+		Proto:       ps,
+	}
 	return
 
 }
@@ -106,6 +110,9 @@ func ReadAll(input []byte) (shards []*Shard, err error) {
 			return
 		} else {
 			// both shard and err are nil => no more pem blocks
+			if len(shards) == 0 {
+				err = fmt.Errorf("no pem blocks found")
+			}
 			return
 		}
 	}

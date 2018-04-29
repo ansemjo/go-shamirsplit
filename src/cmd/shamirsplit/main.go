@@ -19,19 +19,22 @@ func main() {
 	create := parser.NewCommand("create", "split stdin into pem shards")
 	combine := parser.NewCommand("combine", "reconstruct data from pem shards")
 
+	// creation arguments
 	threshold := create.Int("t", "threshold", &argparse.Options{
 		Required: true,
 		Help:     "minimum number of shares needed for reconstruction",
 	})
-
 	shares := create.Int("s", "shares", &argparse.Options{
 		Required: true,
 		Help:     "total number of shares to create",
 	})
-
 	description := create.String("", "description", &argparse.Options{
 		Required: false,
 		Help:     "add a short description to the PEM blocks",
+	})
+	nullbyte := create.Flag("0", "null", &argparse.Options{
+		Required: false,
+		Help:     "terminate pem block with a null byte (\\x00)",
 	})
 
 	// parse arguments and exit if necessary
@@ -55,22 +58,22 @@ func main() {
 			log.Fatal(err)
 		}
 
+		// serialize and output pem blocks
 		for _, s := range shards {
 			pem, err := s.MarshalPEM()
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Print(string(pem) + "\x00")
+			fmt.Print(string(pem))
+			if *nullbyte {
+				fmt.Print("\x00")
+			}
+
 		}
 
 	}
 
 	if combine.Happened() {
-
-		// TODO: when combining files written with
-		// ... | while read -d '' pem; do printf "%s" "$pem" > pem.$((i++)); done
-		// later with cat pem.* | .. combine
-		// there is a "index out of range" error. probably something about missing EOLs?
 
 		shards, err := sharding.ReadAll(stdin)
 		if err != nil {

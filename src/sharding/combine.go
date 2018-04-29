@@ -1,6 +1,9 @@
 package sharding
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/jinzhu/copier"
 
 	"github.com/ansemjo/shamir/src/cryptography"
@@ -14,6 +17,12 @@ import (
 // the shards.
 func CombineShards(shards []*ProtoShard) (data []byte, err error) {
 
+	// shards must not be empty
+	if len(shards) == 0 {
+		err = fmt.Errorf("shards slice cannot be empty")
+		return
+	}
+
 	// assume the first shard to be our and use for later reference
 	my := &ProtoShard{}
 	err = copier.Copy(my, shards[0])
@@ -26,13 +35,22 @@ func CombineShards(shards []*ProtoShard) (data []byte, err error) {
 
 	// verify and collect valid shards
 	verified := shards[:0]
-	for _, s := range shards {
+	for i, s := range shards {
 		if ok, e := verifyShardSignature(s, my.Pubkey); ok {
 			verified = append(verified, s)
 		} else if e != nil {
 			err = e
 			return
+		} else {
+			// TODO: only on verbose flag
+			fmt.Fprintf(os.Stderr, "invalid signature on shard %d/%d\n", i+1, len(shards))
 		}
+	}
+
+	// check number of shards
+	if len(verified) < threshold {
+		err = fmt.Errorf("not enough valid shards given (%d/%d)", len(verified), threshold)
+		return
 	}
 
 	// collect reed-solomon blocks and keyshares
