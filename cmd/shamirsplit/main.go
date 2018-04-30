@@ -8,7 +8,7 @@ import (
 	"path"
 
 	"github.com/akamensky/argparse"
-	"github.com/ansemjo/shamir/sharding"
+	"github.com/ansemjo/go-shamirsplit/sharding"
 )
 
 func main() {

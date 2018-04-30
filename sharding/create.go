@@ -3,7 +3,7 @@ package sharding
 import (
 	"fmt"
 
-	"github.com/ansemjo/shamir/cryptography"
+	"github.com/ansemjo/go-shamirsplit/cryptography"
 	proto "github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
 )

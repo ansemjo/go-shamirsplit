@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/ansemjo/shamir/sharding"
+	"github.com/ansemjo/go-shamirsplit/sharding"
 )
 
 var enc = base64.StdEncoding.EncodeToString
