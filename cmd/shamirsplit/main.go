@@ -35,11 +35,15 @@ func main() {
 	})
 	nullbyte := create.Flag("0", "null", &argparse.Options{
 		Required: false,
-		Help:     "terminate each pem block with a null byte",
+		Help:     "terminate each pem block on stdout with a null byte",
 	})
 	outdir := create.String("d", "directory", &argparse.Options{
 		Required: false,
 		Help:     "output pem blocks to files in this directory",
+	})
+	outname := create.String("n", "name", &argparse.Options{
+		Required: false,
+		Help:     "filename stub for writing to directory; will be suffixed with _000.pem, _001.pem etc.",
 	})
 
 	// parse arguments and exit if necessary
@@ -114,7 +118,13 @@ func main() {
 
 			} else {
 
-				filename := fmt.Sprintf("shard_%s_%03d.pem", s.UUID, i)
+				var filename string
+				if *outname == "" {
+					filename = fmt.Sprintf("shard_%s_%03d.pem", s.UUID, i)
+				} else {
+					filename = fmt.Sprintf("%s_%03d.pem", *outname, i)
+				}
+
 				pathname := path.Join(*outdir, filename)
 				fmt.Println(pathname)
 
