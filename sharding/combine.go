@@ -6,7 +6,7 @@ import (
 
 	"github.com/jinzhu/copier"
 
-	"github.com/ansemjo/shamir/src/cryptography"
+	"github.com/ansemjo/shamir/cryptography"
 
 	proto "github.com/golang/protobuf/proto"
 )

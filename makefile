@@ -9,8 +9,8 @@ PREFIX := /usr/local
 PROTOS := $(shell find -type f -name '*.proto' | sed 's/\.proto$$/.pb.go/')
 
 # compile binary
-$(BINARY) : src/sharding/protobuf.pb.go
-	go build -o $@ src/cmd/shamirsplit/main.go
+$(BINARY) : sharding/protobuf.pb.go
+	go build -o $@ cmd/shamirsplit/main.go
 
 # install in $PATH
 install : $(BINARY)

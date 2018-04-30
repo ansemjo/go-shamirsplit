@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/ansemjo/shamir/src/sharding"
+	"github.com/ansemjo/shamir/sharding"
 )
 
 var enc = base64.StdEncoding.EncodeToString

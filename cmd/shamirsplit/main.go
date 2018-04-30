@@ -8,7 +8,7 @@ import (
 	"path"
 
 	"github.com/akamensky/argparse"
-	"github.com/ansemjo/shamir/src/sharding"
+	"github.com/ansemjo/shamir/sharding"
 )
 
 func main() {
