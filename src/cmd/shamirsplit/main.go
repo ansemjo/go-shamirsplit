@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 
 	"github.com/akamensky/argparse"
 	"github.com/ansemjo/shamir/src/sharding"
@@ -34,7 +35,11 @@ func main() {
 	})
 	nullbyte := create.Flag("0", "null", &argparse.Options{
 		Required: false,
-		Help:     "terminate pem block with a null byte (\\x00)",
+		Help:     "terminate each pem block with a null byte",
+	})
+	outdir := create.String("d", "directory", &argparse.Options{
+		Required: false,
+		Help:     "output pem blocks to files in this directory",
 	})
 
 	// parse arguments and exit if necessary
@@ -53,20 +58,74 @@ func main() {
 	// decide which command to run
 	if create.Happened() {
 
+		// check if outdir is a valid directory
+		if *outdir != "" {
+
+			if *nullbyte {
+				// null termination does not make sense for direct writing
+				*nullbyte = false
+				fmt.Fprintln(os.Stderr, "disabling nullbyte")
+			}
+
+			dir, err := os.Open(*outdir)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer dir.Close()
+
+			stat, err := dir.Stat()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if !stat.IsDir() {
+				log.Fatal(fmt.Errorf("not a directory: %q", *outdir))
+			}
+
+		}
+
+		// create shards
 		shards, err := sharding.CreateShards(*threshold, *shares, stdin, *description)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		// serialize and output pem blocks
-		for _, s := range shards {
+		for i, s := range shards {
+
 			pem, err := s.MarshalPEM()
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Print(string(pem))
-			if *nullbyte {
-				fmt.Print("\x00")
+
+			writefile := func(f *os.File) {
+				if *nullbyte {
+					pem = append(pem, '\x00')
+				}
+				_, err = fmt.Fprintf(f, "%s", pem)
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+
+			if *outdir == "" {
+
+				writefile(os.Stdout)
+
+			} else {
+
+				filename := fmt.Sprintf("shard_%s_%03d.pem", s.UUID, i)
+				pathname := path.Join(*outdir, filename)
+				fmt.Println(pathname)
+
+				f, err := os.Create(pathname)
+				if err != nil {
+					log.Fatal(err)
+				}
+				defer f.Close()
+
+				writefile(f)
+
 			}
 
 		}
