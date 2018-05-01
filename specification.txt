@@ -1,0 +1,56 @@
+The following diagram attempts to visualize the data flows and processes
+involved in creating the shards:
+
+
+k random key    u random UUID    s total shares    t threshold
+     +         |    +                                         |
+     |         +----------------------+-----------------------+
+     |              |                 |
+     |              |                 | proto associated data {
+     |              | first           |   bytes uuid
+     |              | 12 bytes        |   int32 shares
+     |              |                 |   int32 threshold
++----+              +------+          | }
+|    |                     |    +-----+
+|    +---------------+     |    |
+|                    |     |    |
+|                    v     v    v
+|          Encrypt( key, nonce, ad ) +---> Ciphertext
+|                    +                         +
+|                    |                         |
+|     +--------------+                         | PKCS7 padding( blocksize t )
+|     |                                        v
+|     | Shamir secret sharing( threshold t,    |
+|     |                  shares s )            | Reed-Solomon encoding( data t,
+|     |                                        |                   parity s-t )
+|     v                                        v
+|    [s] keyshares +----> [s] shares <------+ [s] datashares
+|                               +
+|                               |
+|                    +----------+
+|                    |
+|                    v
+|  for i := range shares {
+|
+|    +---------------------------+
+|    | proto shard {             |
+|    |   proto  associated data  |
+|    |   int32  index i          |
+|    |   bytes  keyshare[i]      |
+|    |   bytes  datashare[i]     |
+|    |   bytes  publickey (nil) <----------------+
+|    |   bytes  signature (nil) <-----+          |
+|    | }                         |    |          |
+|    +-----------------+---------+    |          |
+|                      |              |          |
+|                      |              |          |
++----------------+     |              |          |
+                 |     |              |          |
+                 v     v              +          +
+     Signature( key, shard ) +--> signature, publickey
+
+     Output( shard )
+
+   }
+
+                                    (created with http://asciiflow.com/)

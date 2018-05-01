@@ -37,6 +37,9 @@ When creating shards there are two main arguments, threshold and shares. The
 latter is the total number of shards created and threshold is the minimum number
 of shards needed to reconstruct the original data.
 
+For an attempted visualization of the process and data flows see
+[`specification.txt`](/specification.txt).
+
 In the spirit of "don't roll your own crypto", I didn't implement any of the
 primitives used within. I merely plugged them together and hope that I didn't
 make any grave mistakes in doing so. Some of the pieces used within:
