@@ -1,7 +1,7 @@
 package cryptography
 
 import (
-	"github.com/dsprenkels/sss-go"
+	"github.com/ansemjo/go-shamirsplit/sss-go"
 )
 
 // see https://dsprenkels.com/sss-34c3.html for description and implementation details
